@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.grokonez.spring.restapi.mongodb.model.Customer;
 import com.grokonez.spring.restapi.mongodb.repo.CustomerRepository;
+import com.grokonez.spring.restapi.mongodb.service.CustomerService;
 
 @CrossOrigin(origins = "http://localhost:8081")
 @RestController
@@ -28,39 +29,36 @@ public class CustomerController {
 	@Autowired
 	CustomerRepository repository;
 
+	//get all customers done
 	@GetMapping("/customers")
-	public List getAllCustomers() {
+	public ResponseEntity<List<Customer>> getAllCustomers() {
 		System.out.println("Get all Customers...");
 
-		List customers = new ArrayList<>();
-		repository.findAll().forEach(customers::add);
-
-		return customers;
+		return ResponseEntity.ok(CustomerService.getAllCustomers());
 	}
 
+	//post done
 	@PostMapping("/customer")
 	public Customer postCustomer(@RequestBody Customer customer) {
-
-		Customer _customer = repository.save(new Customer(customer.getName(), customer.getAge()));
-		return _customer;
+		return CustomerService.addCustomer(customer);
 	}
 
 	@DeleteMapping("/customer/{id}")
 	public ResponseEntity deleteCustomer(@PathVariable("id") String id) {
 		System.out.println("Delete Customer with ID = " + id + "...");
 
-		repository.deleteById(id);
+		CustomerService.deleteCustomer(id);
 
 		return new ResponseEntity<>("Customer has been deleted!", HttpStatus.OK);
 	}
 
+	//search age done
 	@GetMapping("customers/age/{age}")
 	public List findByAge(@PathVariable int age) {
-
-		List customers = repository.findByAge(age);
-		return customers;
+		return CustomerService.searchAge(age);
 	}
 
+	//update done
 	@PutMapping("/customer/{id}")
 	public ResponseEntity updateCustomer(@PathVariable("id") String id, @RequestBody Customer customer) {
 		System.out.println("Update Customer with ID = " + id + "...");
@@ -68,11 +66,7 @@ public class CustomerController {
 		Optional customerData = repository.findById(id);
 
 		if (customerData.isPresent()) {
-			Customer _customer = (Customer) customerData.get();
-			_customer.setName(customer.getName());
-			_customer.setAge(customer.getAge());
-			_customer.setActive(customer.isActive());
-			return new ResponseEntity<>(repository.save(_customer), HttpStatus.OK);
+			return new ResponseEntity<>(repository.save(CustomerService.updateCustomer(id, customer)), HttpStatus.OK);
 		} else {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
